@@ -44,7 +44,7 @@ const retryFetch = async (url: string, options: RequestInit = {}, retries = 3, t
       const response = await fetchWithTimeout(url, options, timeout);
       if (response.ok) return response; // Si es exitoso, retornamos la respuesta
     } catch (error) {
-      console.warn(`Attempt ${i + 1} failed: ${error.message}`);
+      //console.warn(`Attempt ${i + 1} failed: ${error.message}`);
       if (i < retries - 1) {
         // Espera de 1 segundo antes de reintentar
         await new Promise(resolve => setTimeout(resolve, 1000));
