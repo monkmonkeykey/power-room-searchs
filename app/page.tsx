@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, FormEvent } from 'react';
 
 export default function Home() {
   const [query, setQuery] = useState('');
@@ -39,24 +39,24 @@ export default function Home() {
   };
 
   // Función para manejar el envío de la búsqueda
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     search(1);
   };
 
   // Función para cambiar la página
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages) return;
     search(newPage);
   };
 
   // Función para abrir el modal de video
-  const openVideoModal = (videoUrl) => {
+  const openVideoModal = (videoUrl: string) => {
     setModalVideo(videoUrl); // Configura la URL del video en el estado modalVideo
   };
 
   // Función para abrir el modal con el texto y los tres objetos anteriores y posteriores en el mismo archivo JSON
-  const openTextModal = (result, index) => {
+  const openTextModal = (result: any, index: number) => {
     const jsonFileData = result.jsonFileData || []; // Verificar si jsonFileData existe
     console.log('Datos JSON:', jsonFileData);
 
@@ -76,8 +76,8 @@ export default function Home() {
     // Verificar y actualizar el estado del modal con los textos previos y el texto actual
     setModalTextData({
       currentText: result.text, // Texto del resultado actual
-      previousTexts: previousTexts.map(item => item.text), // Mapear solo los textos
-      nextTexts: followingTexts.map(item => item.text), // Mapear solo los textos posteriores
+      previousTexts: previousTexts.map((item: any) => item.text), // Mapear solo los textos
+      nextTexts: followingTexts.map((item: any) => item.text), // Mapear solo los textos posteriores
     });
 
     console.log('Datos del modal:', { currentText: result.text, previousTexts, followingTexts });
@@ -89,7 +89,7 @@ export default function Home() {
     setModalTextData(null);
   };
 
-  const changeLanguage = (lang) => {
+  const changeLanguage = (lang: string) => {
     setLanguage(lang); // Cambia el idioma
   };
 
@@ -120,7 +120,7 @@ export default function Home() {
   const t = translations[language];
 
   // Función para subrayar la palabra de búsqueda en los resultados
-  const highlightQuery = (text) => {
+  const highlightQuery = (text: string) => {
     const regex = new RegExp(`(${query})`, 'gi');
     return text.replace(regex, '<span style="text-decoration:underline;">$1</span>');
   };
@@ -155,7 +155,7 @@ export default function Home() {
       {/* Resultados de la búsqueda */}
       <div style={styles.grid}>
         {results.length > 0 ? (
-          results.map((result, index) => (
+          results.map((result: any, index: number) => (
             <div key={index} style={styles.resultItem}>
               <img 
                 src={result.thumbnail} 
@@ -215,13 +215,13 @@ export default function Home() {
             <button style={styles.modalCloseButton} onClick={closeModal}>{t.closeButton}</button>
             <div>
               {/* Mostrar los textos anteriores */}
-              {modalTextData.previousTexts.map((text, index) => (
+              {modalTextData.previousTexts.map((text: string, index: number) => (
                 <p key={index}>{text}</p>
               ))}
               {/* Mostrar el texto del resultado actual */}
               <p><strong>Texto actual:</strong> {modalTextData.currentText}</p>
               {/* Mostrar los textos posteriores */}
-              {modalTextData.nextTexts.map((text, index) => (
+              {modalTextData.nextTexts.map((text: string, index: number) => (
                 <p key={index}>{text}</p>
               ))}
             </div>
@@ -232,7 +232,7 @@ export default function Home() {
   );
 }
 
-const styles = {
+const styles: { [key: string]: React.CSSProperties } = {
   container: {
     maxWidth: '1200px',
     margin: '0 auto',
