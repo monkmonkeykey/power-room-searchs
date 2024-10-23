@@ -2,16 +2,32 @@
 
 import { useState, FormEvent } from 'react';
 
+// Definir las interfaces para los resultados y los datos del modal
+interface Result {
+  text: string;
+  fileName: string;
+  date: string;
+  youtubeLink: string;
+  thumbnail: string;
+  jsonFileData: { text: string }[]; // Ajusta según tu estructura de jsonFileData
+}
+
+interface ModalTextData {
+  currentText: string;
+  previousTexts: string[];
+  nextTexts: string[];
+}
+
 export default function Home() {
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState([]);
-  const [totalResults, setTotalResults] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [modalTextData, setModalTextData] = useState(null); // Estado para mostrar el texto y sus contextos anteriores
-  const [modalVideo, setModalVideo] = useState(null); // Estado para mostrar el video
-  const [noResults, setNoResults] = useState(false); // Estado para controlar los resultados vacíos
-  const [language, setLanguage] = useState('es'); // Estado para el idioma (es: español, en: inglés)
+  const [query, setQuery] = useState<string>(''); // Tipo string
+  const [results, setResults] = useState<Result[]>([]); // Array de Result
+  const [totalResults, setTotalResults] = useState<number>(0); // Tipo number
+  const [currentPage, setCurrentPage] = useState<number>(1); // Tipo number
+  const [totalPages, setTotalPages] = useState<number>(1); // Tipo number
+  const [modalTextData, setModalTextData] = useState<ModalTextData | null>(null); // Estado para mostrar el texto y sus contextos anteriores
+  const [modalVideo, setModalVideo] = useState<string | null>(null); // Estado para mostrar el video
+  const [noResults, setNoResults] = useState<boolean>(false); // Estado para controlar los resultados vacíos
+  const [language, setLanguage] = useState<'es' | 'en'>('es'); // Estado para el idioma (es: español, en: inglés)
 
   // Función para buscar resultados en base a una query
   const search = async (page = 1) => {
@@ -25,13 +41,13 @@ export default function Home() {
       const data = await res.json();
 
       if (data.results.length === 0) {
-        setNoResults(true);  // No se encontraron resultados
+        setNoResults(true); // No se encontraron resultados
       } else {
         setResults(data.results);
         setTotalResults(data.totalResults);
         setTotalPages(data.totalPages);
         setCurrentPage(data.currentPage);
-        setNoResults(false);  // Reinicia la bandera de "sin resultados"
+        setNoResults(false); // Reinicia la bandera de "sin resultados"
       }
     } catch (error) {
       console.error('Search failed:', error);
@@ -56,8 +72,8 @@ export default function Home() {
   };
 
   // Función para abrir el modal con el texto y los tres objetos anteriores y posteriores en el mismo archivo JSON
-  const openTextModal = (result: any, index: number) => {
-    const jsonFileData = result.jsonFileData || []; // Verificar si jsonFileData existe
+  const openTextModal = (result: Result, index: number) => {
+    const jsonFileData = result.jsonFileData || [];
     console.log('Datos JSON:', jsonFileData);
 
     if (!Array.isArray(jsonFileData)) {
@@ -70,14 +86,14 @@ export default function Home() {
     const end = Math.min(index + 3, jsonFileData.length - 1); // Muestra hasta 3 arrays después
 
     // Obtenemos los textos contextuales
-    const previousTexts = jsonFileData.slice(start, index); 
-    const followingTexts = jsonFileData.slice(index + 1, end + 1); 
+    const previousTexts = jsonFileData.slice(start, index);
+    const followingTexts = jsonFileData.slice(index + 1, end + 1);
 
     // Verificar y actualizar el estado del modal con los textos previos y el texto actual
     setModalTextData({
       currentText: result.text, // Texto del resultado actual
-      previousTexts: previousTexts.map((item: any) => item.text), // Mapear solo los textos
-      nextTexts: followingTexts.map((item: any) => item.text), // Mapear solo los textos posteriores
+      previousTexts: previousTexts.map((item) => item.text), // Mapear solo los textos
+      nextTexts: followingTexts.map((item) => item.text), // Mapear solo los textos posteriores
     });
 
     console.log('Datos del modal:', { currentText: result.text, previousTexts, followingTexts });
@@ -89,7 +105,7 @@ export default function Home() {
     setModalTextData(null);
   };
 
-  const changeLanguage = (lang: string) => {
+  const changeLanguage = (lang: 'es' | 'en') => {
     setLanguage(lang); // Cambia el idioma
   };
 
@@ -155,7 +171,7 @@ export default function Home() {
       {/* Resultados de la búsqueda */}
       <div style={styles.grid}>
         {results.length > 0 ? (
-          results.map((result: any, index: number) => (
+          results.map((result, index) => (
             <div key={index} style={styles.resultItem}>
               <img 
                 src={result.thumbnail} 
@@ -215,13 +231,13 @@ export default function Home() {
             <button style={styles.modalCloseButton} onClick={closeModal}>{t.closeButton}</button>
             <div>
               {/* Mostrar los textos anteriores */}
-              {modalTextData.previousTexts.map((text: string, index: number) => (
+              {modalTextData.previousTexts.map((text, index) => (
                 <p key={index}>{text}</p>
               ))}
               {/* Mostrar el texto del resultado actual */}
               <p><strong>Texto actual:</strong> {modalTextData.currentText}</p>
               {/* Mostrar los textos posteriores */}
-              {modalTextData.nextTexts.map((text: string, index: number) => (
+              {modalTextData.nextTexts.map((text, index) => (
                 <p key={index}>{text}</p>
               ))}
             </div>
