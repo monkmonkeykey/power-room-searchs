@@ -83,7 +83,7 @@ export default function Home() {
         setNoResults(false); // Reinicia la bandera de "sin resultados"
       }
     } catch (error) {
-      console.error('Search failed:', error.message);
+      //console.error('Search failed:', error.message);
       alert('Hubo un problema al realizar la búsqueda. Por favor, inténtalo de nuevo.');
     }
   };
