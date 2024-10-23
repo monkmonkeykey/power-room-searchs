@@ -2,14 +2,14 @@
 
 import { useState, FormEvent } from 'react';
 
-// Definir las interfaces para los resultados y los datos del modal
+// Definir los tipos para los datos del resultado y del modal
 interface Result {
   text: string;
   fileName: string;
   date: string;
   youtubeLink: string;
   thumbnail: string;
-  jsonFileData: { text: string }[]; // Ajusta según tu estructura de jsonFileData
+  jsonFileData: { text: string }[];
 }
 
 interface ModalTextData {
@@ -18,73 +18,39 @@ interface ModalTextData {
   nextTexts: string[];
 }
 
-// Función auxiliar para agregar timeout a fetch
-const fetchWithTimeout = (url: string, options: RequestInit = {}, timeout = 10000): Promise<Response> => {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => {
-      reject(new Error('Request timed out'));
-    }, timeout);
-
-    fetch(url, options)
-      .then(response => {
-        clearTimeout(timer);
-        resolve(response);
-      })
-      .catch(err => {
-        clearTimeout(timer);
-        reject(err);
-      });
-  });
-};
-
-// Función auxiliar para hacer reintentos en caso de fallo
-const retryFetch = async (url: string, options: RequestInit = {}, retries = 3, timeout = 10000) => {
-  for (let i = 0; i < retries; i++) {
-    try {
-      const response = await fetchWithTimeout(url, options, timeout);
-      if (response.ok) return response; // Si es exitoso, retornamos la respuesta
-    } catch (error) {
-      //console.warn(`Attempt ${i + 1} failed: ${error.message}`);
-      if (i < retries - 1) {
-        // Espera de 1 segundo antes de reintentar
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-    }
-  }
-  throw new Error('All fetch attempts failed');
-};
-
 export default function Home() {
-  const [query, setQuery] = useState<string>(''); // Tipo string
-  const [results, setResults] = useState<Result[]>([]); // Array de Result
-  const [totalResults, setTotalResults] = useState<number>(0); // Tipo number
-  const [currentPage, setCurrentPage] = useState<number>(1); // Tipo number
-  const [totalPages, setTotalPages] = useState<number>(1); // Tipo number
-  const [modalTextData, setModalTextData] = useState<ModalTextData | null>(null); // Estado para mostrar el texto y sus contextos anteriores
-  const [modalVideo, setModalVideo] = useState<string | null>(null); // Estado para mostrar el video
-  const [noResults, setNoResults] = useState<boolean>(false); // Estado para controlar los resultados vacíos
-  const [language, setLanguage] = useState<'es' | 'en'>('es'); // Estado para el idioma (es: español, en: inglés)
+  const [query, setQuery] = useState<string>(''); // Añadir el tipo string
+  const [results, setResults] = useState<Result[]>([]); // Añadir el tipo Result[]
+  const [totalResults, setTotalResults] = useState<number>(0); // Añadir el tipo number
+  const [currentPage, setCurrentPage] = useState<number>(1); // Añadir el tipo number
+  const [totalPages, setTotalPages] = useState<number>(1); // Añadir el tipo number
+  const [modalTextData, setModalTextData] = useState<ModalTextData | null>(null); // Añadir el tipo ModalTextData | null
+  const [modalVideo, setModalVideo] = useState<string | null>(null); // Añadir el tipo string | null
+  const [noResults, setNoResults] = useState<boolean>(false); // Añadir el tipo boolean
+  const [language, setLanguage] = useState<'es' | 'en'>('es'); // Añadir el tipo 'es' | 'en'
 
   // Función para buscar resultados en base a una query
-  const search = async (page = 1) => {
+  const search = async (page: number = 1) => {
     if (query === '') return;
 
     try {
-      const res = await retryFetch(`/api/search?query=${query}&page=${page}`, {}, 3, 10000); // 3 reintentos, timeout de 10s
+      const res = await fetch(`/api/search?query=${query}&page=${page}`);
+      if (!res.ok) {
+        throw new Error(`Error: ${res.status}`);
+      }
       const data = await res.json();
 
       if (data.results.length === 0) {
-        setNoResults(true); // No se encontraron resultados
+        setNoResults(true);  // No se encontraron resultados
       } else {
         setResults(data.results);
         setTotalResults(data.totalResults);
         setTotalPages(data.totalPages);
         setCurrentPage(data.currentPage);
-        setNoResults(false); // Reinicia la bandera de "sin resultados"
+        setNoResults(false);  // Reinicia la bandera de "sin resultados"
       }
     } catch (error) {
-      //console.error('Search failed:', error.message);
-      alert('Hubo un problema al realizar la búsqueda. Por favor, inténtalo de nuevo.');
+      console.error('Search failed:', error);
     }
   };
 
@@ -107,7 +73,7 @@ export default function Home() {
 
   // Función para abrir el modal con el texto y los tres objetos anteriores y posteriores en el mismo archivo JSON
   const openTextModal = (result: Result, index: number) => {
-    const jsonFileData = result.jsonFileData || [];
+    const jsonFileData = result.jsonFileData || []; // Verificar si jsonFileData existe
     console.log('Datos JSON:', jsonFileData);
 
     if (!Array.isArray(jsonFileData)) {
@@ -126,8 +92,8 @@ export default function Home() {
     // Verificar y actualizar el estado del modal con los textos previos y el texto actual
     setModalTextData({
       currentText: result.text, // Texto del resultado actual
-      previousTexts: previousTexts.map((item) => item.text), // Mapear solo los textos
-      nextTexts: followingTexts.map((item) => item.text), // Mapear solo los textos posteriores
+      previousTexts: previousTexts.map(item => item.text), // Mapear solo los textos
+      nextTexts: followingTexts.map(item => item.text), // Mapear solo los textos posteriores
     });
 
     console.log('Datos del modal:', { currentText: result.text, previousTexts, followingTexts });
