@@ -18,6 +18,42 @@ interface ModalTextData {
   nextTexts: string[];
 }
 
+// Función auxiliar para agregar timeout a fetch
+const fetchWithTimeout = (url: string, options: RequestInit = {}, timeout = 10000): Promise<Response> => {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error('Request timed out'));
+    }, timeout);
+
+    fetch(url, options)
+      .then(response => {
+        clearTimeout(timer);
+        resolve(response);
+      })
+      .catch(err => {
+        clearTimeout(timer);
+        reject(err);
+      });
+  });
+};
+
+// Función auxiliar para hacer reintentos en caso de fallo
+const retryFetch = async (url: string, options: RequestInit = {}, retries = 3, timeout = 10000) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetchWithTimeout(url, options, timeout);
+      if (response.ok) return response; // Si es exitoso, retornamos la respuesta
+    } catch (error) {
+      console.warn(`Attempt ${i + 1} failed: ${error.message}`);
+      if (i < retries - 1) {
+        // Espera de 1 segundo antes de reintentar
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+  }
+  throw new Error('All fetch attempts failed');
+};
+
 export default function Home() {
   const [query, setQuery] = useState<string>(''); // Tipo string
   const [results, setResults] = useState<Result[]>([]); // Array de Result
@@ -34,10 +70,7 @@ export default function Home() {
     if (query === '') return;
 
     try {
-      const res = await fetch(`/api/search?query=${query}&page=${page}`);
-      if (!res.ok) {
-        throw new Error(`Error: ${res.status}`);
-      }
+      const res = await retryFetch(`/api/search?query=${query}&page=${page}`, {}, 3, 10000); // 3 reintentos, timeout de 10s
       const data = await res.json();
 
       if (data.results.length === 0) {
@@ -50,7 +83,8 @@ export default function Home() {
         setNoResults(false); // Reinicia la bandera de "sin resultados"
       }
     } catch (error) {
-      console.error('Search failed:', error);
+      console.error('Search failed:', error.message);
+      alert('Hubo un problema al realizar la búsqueda. Por favor, inténtalo de nuevo.');
     }
   };
 
